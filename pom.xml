@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example.group</groupId>
+    <artifactId>example-customer-extension-parent</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+    <name>ArkCase Extension Parent Project</name>
+    <description>ArkCase Extension Parent Project for an Example Customer using WAR Overlay</description>
+    <inceptionYear>2024</inceptionYear>
+
+    <organization>
+        <name>ArkCase LLC</name>
+        <url>http://www.arkcase.com</url>
+    </organization>
+
+    <properties>
+        <arkcase.version>2023.02.03</arkcase.version>
+
+        <!-- for CI/CD -->
+        <revision>1.0.0-SNAPSHOT</revision>
+        <changelist>example-customer</changelist>
+
+        <maven.min-version>3.8.6</maven.min-version>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>11</java.version>
+
+        <!-- Plugin versions -->
+        <sonar.version>3.5.0.1254</sonar.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-gitflow-plugin.version>1.14.0</maven-gitflow-plugin.version>
+        <maven-jar-plugin.version>3.0.0</maven-jar-plugin.version>
+        <maven-buildnumber-plugin.version>3.0.0</maven-buildnumber-plugin.version>
+        <maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
+        <maven-flatten-plugin.version>1.3.0</maven-flatten-plugin.version>
+        <maven-surefire-plugin.version>3.0.0</maven-surefire-plugin.version>
+        <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
+        <lombok.version>1.18.28</lombok.version>
+        <spring.version>5.3.2</spring.version>
+        <easymock.version>4.1</easymock.version>
+    </properties>
+
+    <scm>
+        <connection>scm:git:${git.repository}</connection>
+        <developerConnection>scm:git:${git.repository}</developerConnection>
+        <url>${git.repository}</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <repositories>
+        <repository>
+            <id>example-customer.snapshot</id>
+            <name>ArkCase for Example Customer Snapshots</name>
+            <url>https://nexus.customer.com/repository/example-customer.snapshot/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>example-customer.release</id>
+            <name>ArkCase for Example Customer Releases</name>
+            <url>https://nexus.customer.com/repository/example-customer.release/</url>
+        </repository>
+        <repository>
+            <id>arkcase.snapshot</id>
+            <name>ArkCase Snapshots</name>
+            <url>https://project.armedia.com/nexus/repository/arkcase.snapshot/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>arkcase.release</id>
+            <name>ArkCase Releases</name>
+            <url>https://project.armedia.com/nexus/repository/arkcase.release/</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>example-customer.snapshot</id>
+            <name>ArkCase for Example Customer Snapshot</name>
+            <url>https://nexus.customer.com/content/repositories/example-customer.snapshot/</url>
+        </snapshotRepository>
+        <repository>
+            <id>example-customer.release</id>
+            <name>ArkCase for Example Customer Release</name>
+            <url>https://nexus.customer.com/content/repositories/example-customer.release/</url>
+        </repository>
+    </distributionManagement>
+
+    <!--
+        When adding dependencies that aren't expected to already exist in the deployment
+        environment (and thus the *provided* scope is inappropriate), but which must also be
+        bundled alongside the extensions JAR because they're required runtime dependencies,
+        declare them here, and include them into the extension JAR's POM identical to the others
+        (i.e. only declare the groupId artifactId and scope for the dependency).
+
+        The war module's build process will pull in any and all *runtime* dependencies,
+        and include them as part of the deployment package. These extra JARs will in turn
+        be deployed to .arkcase/custom/WEB-INF/lib at runtime, which is the expected behavior.
+
+        WARNING: DO NOT INCLUDE DEPENDENCIES THAT MAY CONFLICT WITH EXISTING ARKCASE JARS
+
+        This may cause unwanted and hard-to-debug behavior at runtime, including crashes!
+    -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- example arkcase dependencies -->
+            <dependency>
+                <groupId>com.armedia.acm.acm-services</groupId>
+                <artifactId>acm-service-ecm</artifactId>
+                <version>${arkcase.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.easymock</groupId>
+                <artifactId>easymock</artifactId>
+                <version>${easymock.version}</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${spring.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${maven-enforcer-plugin.version}</version>
+                    <configuration>
+                        <rules>
+                            <requireMavenVersion>
+                                <version>${maven.min-version}</version>
+                            </requireMavenVersion>
+                        </rules>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar.version}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <compilerVersion>${java.version}</compilerVersion>
+                        <compilerArgument>-Xlint:all</compilerArgument>
+                        <showWarnings>true</showWarnings>
+                        <showDeprecation>true</showDeprecation>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <reuseForks>false</reuseForks>
+                        <forkCount>1</forkCount>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                    <configuration>
+                        <archive>
+                            <addMavenDescriptor>false</addMavenDescriptor>
+                            <manifestEntries>
+                                <SCM-Branch>${scmBranch}</SCM-Branch>
+                                <SCM-Revision>${commitHash}</SCM-Revision>
+                                <SCM-Build-Time>${buildTimestamp}</SCM-Build-Time>
+                            </manifestEntries>
+                        </archive>
+                        <excludes>
+                            <exclude>.git*</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>buildnumber-maven-plugin</artifactId>
+                    <version>${maven-buildnumber-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>create-commitHash</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>create</goal>
+                            </goals>
+                            <configuration>
+                                <doCheck>false</doCheck>
+                                <doUpdate>false</doUpdate>
+                                <shortRevisionLength>40</shortRevisionLength>
+                                <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+                                <revisionOnScmFailure>unknown</revisionOnScmFailure>
+                                <buildNumberPropertyName>commitHash</buildNumberPropertyName>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>create-buildTimestamp</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>create-timestamp</goal>
+                            </goals>
+                            <configuration>
+                                <timestampPropertyName>buildTimestamp</timestampPropertyName>
+                                <timestampFormat>yyyy-MM-dd'T'HH:mm:ssZZ</timestampFormat>
+                                <timezone>UTC</timezone>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${maven-assembly-plugin.version}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>${maven-flatten-plugin.version}</version>
+                    <configuration>
+                        <updatePomFile>true</updatePomFile>
+                        <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>flatten.process-resources</id>
+                            <phase>process-resources</phase>
+                            <goals>
+                                <goal>flatten</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>flatten.clean</id>
+                            <phase>clean</phase>
+                            <goals>
+                                <goal>clean</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>${maven.min-version}</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <modules>
+        <module>extension</module>
+        <module>extension-ui</module>
+        <module>config</module>
+        <module>war</module>
+    </modules>
+
+    <profiles>
+        <profile>
+            <id>local-install</id>
+            <activation>
+                <property>
+                    <name>acm-config.location</name>
+                </property>
+            </activation>
+
+            <properties>
+                <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
+            </properties>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>enforce-local-install</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireMavenVersion>
+                                            <version>${maven.min-version}</version>
+                                        </requireMavenVersion>
+
+                                        <!-- Validate that the path given is not a blank path -->
+                                        <requireProperty>
+                                            <property>acm-config.location</property>
+                                            <message>You must set a non-empty value for the acm-config.location property!</message>
+                                            <regex>.*\S.*</regex>
+                                            <regexMessage>The acm-config.location property must contain at least one non-space character.</regexMessage>
+                                        </requireProperty>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-antrun-plugin</artifactId>
+                            <version>${maven-antrun-plugin.version}</version>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
+</project>

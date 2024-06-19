@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.group</groupId>
+        <artifactId>example-customer-extension-parent</artifactId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>example-customer-arkcase</artifactId>
+    <packaging>war</packaging>
+
+    <name>ArkCase Deployment WAR</name>
+    <description>ArkCase Deployment WAR for an Example Customer</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>example-customer-extension</artifactId>
+            <version>${revision}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>example-customer-extension-ui</artifactId>
+            <version>${revision}</version>
+            <type>war</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.armedia.acm.acm-standard-applications</groupId>
+            <artifactId>acm-base</artifactId>
+            <type>war</type>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>${maven-war-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>create-war</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>war</goal>
+                        </goals>
+                        <configuration>
+                            <overlays>
+                                <overlay>
+                                    <groupId>com.armedia.acm.acm-standard-applications</groupId>
+                                    <artifactId>acm-base</artifactId>
+                                </overlay>
+                                <overlay>
+                                    <groupId>com.example</groupId>
+                                    <artifactId>example-customer-extension-ui</artifactId>
+                                    <excludes>
+                                        <exclude>WEB-INF/lib/*</exclude>
+                                    </excludes>
+                                </overlay>
+                            </overlays>
+
+                            <archive>
+                                <manifest>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                </manifest>
+                                <manifestEntries>
+                                    <Build-Time>${maven.build.timestamp}</Build-Time>
+                                    <SCM-Branch>${scmBranch}</SCM-Branch>
+                                    <SCM-Revision>${commitHash}</SCM-Revision>
+                                    <SCM-Build-Time>${buildTimestamp}</SCM-Build-Time>
+                                    <GroupId>${project.groupId}</GroupId>
+                                    <ArtifactId>${project.artifactId}</ArtifactId>
+                                    <Version>${project.version}</Version>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

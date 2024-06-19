@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.group</groupId>
+        <artifactId>example-customer-extension-parent</artifactId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>example-customer-extension-ui</artifactId>
+    <packaging>war</packaging>
+
+    <name>ArkCase Code Extensions - UI</name>
+    <description>ArkCase Code Extensions UI for an Example Customer</description>
+
+    <!-- Example dependency base/foia/privacy ui -->
+    <dependencies>
+        <dependency>
+            <groupId>com.armedia.acm.acm-standard-applications</groupId>
+            <artifactId>acm-base-ui</artifactId>
+            <type>jar</type>
+            <classifier>source</classifier>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven-dependency-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <!--TODO: artifactId can be base/foia/privacy-->
+                            <includeArtifactIds>acm-base-ui</includeArtifactIds>
+                            <includeGroupIds>com.armedia.acm.acm-standard-applications</includeGroupIds>
+                            <outputDirectory>${angular-build.dir}</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--Copy the resources -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven-resources-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${angular-build.dir}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${angular-src.dir}</directory>
+                                </resource>
+                            </resources>
+                            <overwrite>true</overwrite>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Run the build -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${maven-exec-plugin.version}</version>
+                <executions>
+                    <!-- Yarn and Grunt tasks -->
+                    <execution>
+                        <id>yarn-install</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${angular-build.dir}</workingDirectory>
+                            <executable>yarn</executable>
+                            <arguments>
+                                <argument>install</argument>
+                                <argument>--skip-integrity-check</argument>
+                                <argument>--ignore-engines</argument>
+                                <argument>--no-progress</argument>
+                                <argument>--non-interactive</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Grunt merge config task -->
+                    <execution>
+                        <id>run-grunt-merge-config</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${angular-build.dir}</workingDirectory>
+                            <executable>node_modules/.bin/grunt</executable>
+                            <environmentVariables>
+                                <NODE_ENV>${compile.mode}</NODE_ENV>
+                                <DEST_PATH>${angular-build.dir}</DEST_PATH>
+                            </environmentVariables>
+                            <arguments>
+                                <argument>updateModulesConfig</argument>
+                                <argument>--no-color</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- Grunt default build task -->
+                    <execution>
+                        <id>run-grunt-default-build</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${angular-build.dir}</workingDirectory>
+                            <executable>node_modules/.bin/grunt</executable>
+                            <environmentVariables>
+                                <NODE_ENV>${compile.mode}</NODE_ENV>
+                                <DEST_PATH>${angular-build.dir}</DEST_PATH>
+                            </environmentVariables>
+                            <arguments>
+                                <argument>--no-color</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>${maven-war-plugin.version}</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <webResources>
+                        <resource>
+                            <directory>${angular-build.dir}</directory>
+                            <targetPath>/</targetPath>
+                        </resource>
+                    </webResources>
+                    <packagingExcludes>WEB-INF/lib/*.jar</packagingExcludes>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
+                            <SCM-Branch>${scmBranch}</SCM-Branch>
+                            <SCM-Revision>${commitHash}</SCM-Revision>
+                            <SCM-Build-Time>${buildTimestamp}</SCM-Build-Time>
+                            <GroupId>${project.groupId}</GroupId>
+                            <ArtifactId>${project.artifactId}</ArtifactId>
+                            <Version>${project.version}</Version>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>ui-dev</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.armedia.acm.acm-standard-applications</groupId>
+                    <artifactId>ui-dev-tools</artifactId>
+                    <version>${acm.version}</version>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>ui-dev-tools</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>unpack-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <includeGroupIds>com.armedia.acm.acm-standard-applications</includeGroupIds>
+                                    <includeArtifactIds>ui-dev-tools</includeArtifactIds>
+                                    <outputDirectory>${angular-build.dir}</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

@@ -1,0 +1,7 @@
+.idea
+**/*.sw?
+*.sw?
+**/.sw?
+.sw?
+target
+.flattened-pom.xml
